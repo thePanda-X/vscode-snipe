@@ -141,3 +141,4 @@ MIT
 
 - Inspired by ThePrimeagen's `99` Neovim plugin
 - Built with [opencode](https://github.com/anomalyco/opencode)
+- Built with Extra ❤️
