@@ -3,7 +3,7 @@
   "displayName": "Snipe - AI Code Assistant",
   "description": "AI-powered code implementation using opencode - fill in functions and refactor selections without losing your flow",
   "version": "0.0.1",
-  "publisher": "snipe",
+  "publisher": "thePanda-X",
   "engines": {
     "vscode": "^1.109.0"
   },
