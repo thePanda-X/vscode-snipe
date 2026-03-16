@@ -175,7 +175,7 @@ function getFunctionBodyRangeFromLines(
     document: vscode.TextDocument,
     startLine: number,
     endLine: number,
-    baseIndent: number
+    _baseIndent: number
 ): vscode.Range {
     let bodyStartLine = startLine;
     let bodyStartChar = 0;
