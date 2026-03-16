@@ -122,7 +122,7 @@ async function handleFillInFunction(): Promise<void> {
         fileTree,
         fileContent,
         targetCode: functionText,
-        instruction: 'implement this function body',
+        instruction: 'implement this function',
         languageId
     });
 

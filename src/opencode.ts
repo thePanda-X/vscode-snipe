@@ -24,11 +24,14 @@ export class OpencodeClient {
             logger.debug(`Running opencode with prompt: ${prompt.substring(0, 100)}...`);
 
             this.activeProcess = spawn(config.opencodePath, [
-                '-p',
-                prompt
+                'run',
+                prompt,
+                '--agent',
+                'build',
             ], {
-                shell: true,
-                cwd: vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath
+                shell: false,
+                cwd: vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath,
+                stdio: ['inherit', 'pipe', 'pipe']
             });
 
             let stdout = '';
@@ -49,7 +52,7 @@ export class OpencodeClient {
 
             this.activeProcess.on('exit', (code) => {
                 this.activeProcess = null;
-                
+
                 if (code === 0) {
                     logger.debug('Opencode completed successfully');
                     resolve(this.parseOutput(stdout));
@@ -70,11 +73,14 @@ export class OpencodeClient {
             logger.debug(`Running opencode streaming with prompt: ${prompt.substring(0, 100)}...`);
 
             this.activeProcess = spawn(config.opencodePath, [
-                '-p',
-                prompt
+                'run',
+                prompt,
+                '--agent',
+                'build',
             ], {
-                shell: true,
-                cwd: vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath
+                shell: false,
+                cwd: vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath,
+                stdio: ['inherit', 'pipe', 'pipe']
             });
 
             let fullOutput = '';
@@ -97,7 +103,7 @@ export class OpencodeClient {
 
             this.activeProcess.on('exit', (code) => {
                 this.activeProcess = null;
-                
+
                 if (code === 0) {
                     logger.debug('Opencode streaming completed successfully');
                     resolve(this.parseOutput(fullOutput));
@@ -123,10 +129,10 @@ export class OpencodeClient {
 
     private parseOutput(raw: string): string {
         let cleaned = raw;
-        
+
         const ansiRegex = /\x1b\[[0-9;]*[a-zA-Z]/g;
         cleaned = cleaned.replace(ansiRegex, '');
-        
+
         const lines = cleaned.split('\n');
         const codeLines: string[] = [];
         let inCodeBlock = false;
@@ -142,7 +148,7 @@ export class OpencodeClient {
                     break;
                 }
             }
-            
+
             if (inCodeBlock) {
                 codeLines.push(line);
             }
