@@ -165,7 +165,7 @@ export function buildPrompt(options: PromptOptions): string {
 
     parts.push(`\nTarget code to ${options.instruction}:\n\`\`\`${options.languageId || ''}\n${options.targetCode}\n\`\`\``);
 
-    parts.push(`\nTask: ${options.instruction}. Return ONLY the complete function implementation that should replace the target code, without any explanation or markdown.`);
+    parts.push(`\nTask: ${options.instruction}. Return ONLY the code content that should replace the target code. Do NOT include function signatures, declarations, or outer braces - return only the inner content. Do not include any explanation or markdown formatting.`);
 
     return parts.join('\n');
 }
