@@ -5,7 +5,7 @@ import { opencodeClient } from './opencode';
 import { getAgentMdContent, getFileTree, buildPrompt, getWorkspaceRoot } from './context';
 import { getFunctionAtCursor } from './symbols';
 import { getSelectedText, replaceRange, getFullFileContent, clearSelection, getCurrentFilePath, getLanguageId } from './editor';
-import { initStreamingSession, streamingSession } from './streaming';
+import { initStreamingSession, streamingSession, Stage } from './streaming';
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
     const config = getConfig();
@@ -142,22 +142,25 @@ async function handleFillInFunction(): Promise<void> {
                     prompt,
                     editor,
                     bodyRange,
-                    (text) => {
-                        progress.report({ message: `${text.length} chars generated` });
+                    (text, stage) => {
+                        const stageLabel = stage === Stage.Generating ? 'Generating' : stage;
+                        progress.report({ message: `${stageLabel}: ${text.length} chars` });
                     }
                 );
             }
         );
 
+        const processedResult = extractFunctionBody(result);
+
         if (config.showDiffBeforeApply) {
             await showDiffPreview(
                 editor,
                 bodyRange,
-                result,
+                processedResult,
                 languageId
             );
         } else {
-            await applyChange(editor, bodyRange, result);
+            await applyChange(editor, bodyRange, processedResult);
             vscode.window.showInformationMessage('Function implemented successfully!');
         }
 
@@ -240,22 +243,25 @@ async function handleVisualSelection(): Promise<void> {
                     prompt,
                     editor,
                     selectionRange,
-                    (text) => {
-                        progress.report({ message: `${text.length} chars generated` });
+                    (text, stage) => {
+                        const stageLabel = stage === Stage.Generating ? 'Generating' : stage;
+                        progress.report({ message: `${stageLabel}: ${text.length} chars` });
                     }
                 );
             }
         );
 
+        const processedResult = extractFunctionBody(result);
+
         if (config.showDiffBeforeApply) {
             await showDiffPreview(
                 editor,
                 selectionRange,
-                result,
+                processedResult,
                 languageId
             );
         } else {
-            await applyChange(editor, selectionRange, result);
+            await applyChange(editor, selectionRange, processedResult);
             clearSelection(editor);
             vscode.window.showInformationMessage('Selection processed successfully!');
         }
@@ -274,6 +280,64 @@ function handleStopAllRequests(): void {
     } else {
         vscode.window.showInformationMessage('No active requests to stop.');
     }
+}
+
+function extractFunctionBody(text: string): string {
+    let cleaned = text.trim();
+    
+    if (cleaned.startsWith('```')) {
+        const lines = cleaned.split('\n');
+        if (lines.length > 1) {
+            lines.shift();
+            if (lines[lines.length - 1].trim().startsWith('```')) {
+                lines.pop();
+            }
+            cleaned = lines.join('\n');
+        }
+    }
+    
+    cleaned = cleaned.trim();
+    
+    const braceIndex = cleaned.indexOf('{');
+    if (braceIndex === -1) {
+        return cleaned;
+    }
+    
+    let signatureBeforeBrace = cleaned.substring(0, braceIndex).trim();
+    const funcKeywords = ['function', 'async', 'def ', 'public', 'private', 'protected', 'static', 'const ', 'let ', 'var ', 'fn '];
+    const looksLikeSignature = funcKeywords.some(kw => signatureBeforeBrace.includes(kw)) || 
+        /^[a-zA-Z_]\w*\s*\([^)]*\)\s*(?::\s*\w+)?\s*$/.test(signatureBeforeBrace);
+    
+    if (!looksLikeSignature) {
+        return cleaned;
+    }
+    
+    let braceCount = 0;
+    let firstBraceIndex = -1;
+    let lastBraceIndex = -1;
+    
+    for (let i = 0; i < cleaned.length; i++) {
+        if (cleaned[i] === '{') {
+            if (firstBraceIndex === -1) {
+                firstBraceIndex = i;
+            }
+            braceCount++;
+        } else if (cleaned[i] === '}') {
+            braceCount--;
+            if (braceCount === 0) {
+                lastBraceIndex = i;
+                break;
+            }
+        }
+    }
+    
+    if (firstBraceIndex !== -1 && lastBraceIndex !== -1 && lastBraceIndex > firstBraceIndex) {
+        let body = cleaned.substring(firstBraceIndex + 1, lastBraceIndex);
+        body = body.trim();
+        return body;
+    }
+    
+    return cleaned;
 }
 
 async function showDiffPreview(
@@ -330,6 +394,7 @@ async function applyChange(
     newText: string
 ): Promise<void> {
     await replaceRange(editor, range, newText);
+    await vscode.commands.executeCommand('editor.action.formatDocument');
 }
 
 export function deactivate(): void {

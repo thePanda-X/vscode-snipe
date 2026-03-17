@@ -39,6 +39,7 @@ export class OpencodeClient {
 
             this.activeProcess.stdout?.on('data', (data) => {
                 stdout += data.toString();
+                logger.debug(data.toString());
             });
 
             this.activeProcess.stderr?.on('data', (data) => {
