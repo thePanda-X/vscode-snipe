@@ -4,6 +4,11 @@
   "description": "AI-powered code implementation using opencode - fill in functions and refactor selections without losing your flow",
   "version": "0.0.1",
   "publisher": "thePanda-X",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thePanda-X/vscode-snipe.git"
+  },
   "engines": {
     "vscode": "^1.109.0"
   },
