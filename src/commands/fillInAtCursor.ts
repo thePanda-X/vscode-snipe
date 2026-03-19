@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { createSpinner, killSpinner } from '../utils/spinner';
+import { createSpinner } from '../utils/spinner';
 import { implementMethodAtCursor } from '../utils/opencode';
 import { logger } from '../utils/logger';
 
@@ -20,9 +20,7 @@ export function registerFillInAtCursor(context: vscode.ExtensionContext) {
             try {
                 const spinnerId = createSpinner(editor, position, 'Implementing function...');
                 logger.info('Started FillInAtCursor command at position %s:%s', position.line, position.character);
-                const result = await implementMethodAtCursor(editor);
-
-                killSpinner(spinnerId);
+                const result = await implementMethodAtCursor(editor, undefined, spinnerId);
 
                 if (!result.success) {
                     vscode.window.showErrorMessage(result.message);
@@ -64,9 +62,7 @@ export function registerFillInAtCursorWithContext(context: vscode.ExtensionConte
             try {
                 const spinnerId = createSpinner(editor, position, 'Implementing function...');
                 logger.info('Started FillInAtCursorWithContext command at position %s:%s', position.line, position.character);
-                const result = await implementMethodAtCursor(editor, userContext);
-
-                killSpinner(spinnerId);
+                const result = await implementMethodAtCursor(editor, userContext, spinnerId);
 
                 if (!result.success) {
                     vscode.window.showErrorMessage(result.message);
