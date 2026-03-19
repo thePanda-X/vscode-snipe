@@ -411,6 +411,11 @@ async function processEditQueue(): Promise<void> {
                 if (operation.spinnerId) {
                     killSpinner(operation.spinnerId);
                 }
+                try {
+                    await vscode.commands.executeCommand('editor.action.formatDocument');
+                } catch {
+                    logger.info("Formatting not available for this document");
+                }
                 if (operation.resolve) {
                     operation.resolve({
                         success: true,
