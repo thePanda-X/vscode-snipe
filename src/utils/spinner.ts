@@ -4,7 +4,7 @@ const spinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '
 
 interface SpinnerState {
     id: string;
-    editor: vscode.TextEditor;
+    documentUri: vscode.Uri;
     position: vscode.Position;
     message: string;
     frameIndex: number;
@@ -15,6 +15,12 @@ interface SpinnerState {
 const activeSpinners: Map<string, SpinnerState> = new Map();
 
 function renderSpinner(spinner: SpinnerState) {
+    const editor = vscode.window.visibleTextEditors.find(
+        e => e.document.uri.toString() === spinner.documentUri.toString()
+    );
+    if (!editor) {
+        return;
+    }
     const text = `${spinnerFrames[spinner.frameIndex]} ${spinner.message}`;
     const range = new vscode.Range(spinner.position, spinner.position);
     const decoration: vscode.DecorationOptions = {
@@ -23,7 +29,7 @@ function renderSpinner(spinner: SpinnerState) {
             after: { contentText: text }
         }
     };
-    spinner.editor.setDecorations(spinner.decorationType, [decoration]);
+    editor.setDecorations(spinner.decorationType, [decoration]);
 }
 
 export function createSpinner(
@@ -42,7 +48,7 @@ export function createSpinner(
 
     const spinner: SpinnerState = {
         id,
-        editor,
+        documentUri: editor.document.uri,
         position,
         message,
         frameIndex: 0,
@@ -81,7 +87,12 @@ export function killSpinner(id: string): boolean {
         clearInterval(spinner.interval);
     }
     
-    spinner.editor.setDecorations(spinner.decorationType, []);
+    const editor = vscode.window.visibleTextEditors.find(
+        e => e.document.uri.toString() === spinner.documentUri.toString()
+    );
+    if (editor) {
+        editor.setDecorations(spinner.decorationType, []);
+    }
     spinner.decorationType.dispose();
     activeSpinners.delete(id);
 

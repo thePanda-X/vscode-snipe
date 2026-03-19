@@ -22,7 +22,7 @@ interface OpenCodeResult {
 
 interface PendingOperation {
     id: string;
-    editor: vscode.TextEditor;
+    documentUri: vscode.Uri;
     context: FunctionContext;
     status: 'pending' | 'applying' | 'completed' | 'failed';
     spinnerId?: string;
@@ -357,12 +357,32 @@ async function processEditQueue(): Promise<void> {
         try {
             operation.status = 'applying';
             
-            const document = operation.editor.document;
+            const editor = vscode.window.visibleTextEditors.find(
+                e => e.document.uri.toString() === operation.documentUri.toString()
+            );
+            
+            if (!editor) {
+                logger.error("No visible editor for document %s", operation.documentUri.fsPath);
+                operation.status = 'failed';
+                if (operation.spinnerId) {
+                    killSpinner(operation.spinnerId);
+                }
+                if (operation.resolve) {
+                    operation.resolve({
+                        success: false,
+                        message: `Document ${operation.context.filePath} is not visible. Please open the file and try again.`
+                    });
+                }
+                editQueue.shift();
+                continue;
+            }
+            
+            const document = editor.document;
             let context = operation.context;
             
             if (document.version !== context.documentVersion) {
                 logger.info("Document changed, relocating method %s", context.name);
-                const relocatedContext = await relocateMethod(operation.editor, context);
+                const relocatedContext = await relocateMethod(editor, context);
                 if (!relocatedContext) {
                     logger.error("Could not relocate method %s after document change", context.name);
                     operation.status = 'failed';
@@ -381,7 +401,7 @@ async function processEditQueue(): Promise<void> {
                 context = relocatedContext;
             }
 
-            const applied = await operation.editor.edit((editBuilder) => {
+            const applied = await editor.edit((editBuilder) => {
                 editBuilder.replace(context.range, operation.context.implementation || '');
             });
 
@@ -441,7 +461,7 @@ export function queueImplementation(
         
         const operation: PendingOperation = {
             id,
-            editor,
+            documentUri: editor.document.uri,
             context: { ...context, implementation },
             status: 'pending',
             spinnerId,
