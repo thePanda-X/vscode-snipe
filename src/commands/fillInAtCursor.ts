@@ -1,0 +1,38 @@
+import * as vscode from 'vscode';
+import { createSpinner, killSpinner } from '../utils/spinner';
+import { implementMethodAtCursor } from '../utils/opencode';
+import { logger } from '../utils/logger';
+
+export function registerFillInAtCursor(context: vscode.ExtensionContext) {
+    const disposable = vscode.commands.registerCommand(
+        'vscode-snipe-plugin.FillInAtCursor',
+        async () => {
+            const editor = vscode.window.activeTextEditor;
+
+            if (!editor) {
+                vscode.window.showErrorMessage('No active editor found');
+                return;
+            }
+
+            const selection = editor.selection;
+            const position = selection.active;
+
+            try {
+                const spinnerId = createSpinner(editor, position, 'Implementing function...');
+                logger.info('Started FillInAtCursor command at position %s:%s', position.line, position.character);
+                const result = await implementMethodAtCursor(editor);
+
+                killSpinner(spinnerId);
+
+                if (!result.success) {
+                    vscode.window.showErrorMessage(result.message);
+                }
+            } catch (error) {
+                logger.error('Failed to fill in at cursor: %s', error);
+                vscode.window.showErrorMessage('Failed to fill in at cursor');
+            }
+        }
+    );
+
+    context.subscriptions.push(disposable);
+}
