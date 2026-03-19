@@ -9,6 +9,10 @@
   "categories": [
     "Other"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thePanda-X/vscode-snipe"
+  },
   "activationEvents": [
     "onCommand:vscode-snipe-plugin.FillInAtCursor",
     "onCommand:vscode-snipe-plugin.FillInAtCursorWithContext"
