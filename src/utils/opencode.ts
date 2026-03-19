@@ -89,12 +89,12 @@ export async function getCurrentFunctionContext(
     };
 }
 
-export function buildOpenCodePrompt(context: FunctionContext): string {
+export function buildOpenCodePrompt(context: FunctionContext, userContext?: string): string {
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(
         vscode.Uri.file(context.filePath)
     );
 
-    return `Do NOT edit any files directly.
+    let prompt = `Do NOT edit any files directly.
 Gather some context first and then generate the implementation for the method.
 
 Return ONLY the complete method implementation wrapped in <RESULT></RESULT> tags.
@@ -106,7 +106,16 @@ Language: ${vscode.window.activeTextEditor?.document.languageId || 'unknown'}
 Method to implement:
 \`\`\`
 ${context.fullCode}
-\`\`\`
+\`\`\``;
+
+    if (userContext && userContext.trim()) {
+        prompt += `
+
+Additional context from user:
+${userContext.trim()}`;
+    }
+
+    prompt += `
 
 Requirements:
 1. Implement the method body with appropriate logic
@@ -115,6 +124,8 @@ Requirements:
 4. Return the FULL method (signature + body) inside <RESULT> tags
 5. Do NOT include any explanation outside the <RESULT> tags
 You MUST return the implementation wrapped in <RESULT> tags, or else it will be considered a failure.`;
+
+    return prompt;
 }
 
 export function spawnOpenCode(
@@ -263,7 +274,8 @@ export async function applyImplementation(
 }
 
 export async function implementMethodAtCursor(
-    editor: vscode.TextEditor
+    editor: vscode.TextEditor,
+    userContext?: string
 ): Promise<{ success: boolean; message: string }> {
     const position = editor.selection.active;
 
@@ -284,7 +296,7 @@ export async function implementMethodAtCursor(
         };
     }
 
-    const prompt = buildOpenCodePrompt(context);
+    const prompt = buildOpenCodePrompt(context, userContext);
     logger.info("Generating implementation for %s", context.name);
     const result = await spawnOpenCode(
         prompt,

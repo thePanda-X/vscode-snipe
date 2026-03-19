@@ -10,7 +10,8 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:vscode-snipe-plugin.FillInAtCursor"
+    "onCommand:vscode-snipe-plugin.FillInAtCursor",
+    "onCommand:vscode-snipe-plugin.FillInAtCursorWithContext"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -18,12 +19,21 @@
       {
         "command": "vscode-snipe-plugin.FillInAtCursor",
         "title": "Fill In At Cursor"
+      },
+      {
+        "command": "vscode-snipe-plugin.FillInAtCursorWithContext",
+        "title": "Fill In At Cursor With Context"
       }
     ],
     "keybindings": [
       {
         "command": "vscode-snipe-plugin.FillInAtCursor",
         "key": "ctrl+alt+9",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "vscode-snipe-plugin.FillInAtCursorWithContext",
+        "key": "ctrl+alt+0",
         "when": "editorTextFocus"
       }
     ]
