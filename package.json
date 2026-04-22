@@ -19,6 +19,16 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "VSCode Snipe",
+      "properties": {
+        "vscodeSnipe.model": {
+          "type": "string",
+          "default": "",
+          "description": "Optional OpenCode model to use for generation, in provider/model format. Leave empty to use OpenCode's default model."
+        }
+      }
+    },
     "commands": [
       {
         "command": "vscode-snipe-plugin.FillInAtCursor",

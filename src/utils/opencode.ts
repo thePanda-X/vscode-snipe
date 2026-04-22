@@ -20,6 +20,10 @@ interface OpenCodeResult {
     error?: string;
 }
 
+interface OpenCodeOptions {
+    model?: string;
+}
+
 interface PendingOperation {
     id: string;
     documentUri: vscode.Uri;
@@ -148,6 +152,7 @@ You MUST return the implementation wrapped in <RESULT> tags, or else it will be 
 export function spawnOpenCode(
     prompt: string,
     workspaceRoot: string,
+    options: OpenCodeOptions = {},
     timeout: number = 180000
 ): Promise<OpenCodeResult> {
     return new Promise((resolve) => {
@@ -156,7 +161,15 @@ export function spawnOpenCode(
         let process: ChildProcess;
         logger.info(prompt);
         try {
-            process = spawn('opencode', ['run', prompt], {
+            const args = ['run'];
+
+            if (options.model?.trim()) {
+                args.push('--model', options.model.trim());
+            }
+
+            args.push(prompt);
+
+            process = spawn('opencode', args, {
                 cwd: workspaceRoot,
                 shell: false,
                 windowsHide: true,
@@ -523,11 +536,17 @@ export async function implementMethodAtCursor(
         };
     }
 
+    const configuredModel = vscode.workspace
+        .getConfiguration('vscodeSnipe')
+        .get<string>('model')
+        ?.trim();
+
     const prompt = buildOpenCodePrompt(context, userContext);
     logger.info("Generating implementation for %s", context.name);
     const result = await spawnOpenCode(
         prompt,
-        workspaceFolder.uri.fsPath
+        workspaceFolder.uri.fsPath,
+        { model: configuredModel || undefined }
     );
 
     if (!result.success || !result.implementation) {

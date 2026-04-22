@@ -24,7 +24,7 @@ A VS Code extension that uses [opencode](https://opencode.ai) to automatically i
 
 ## Extension Settings
 
-This extension does not contribute any settings yet.
+- `vscodeSnipe.model`: Optional OpenCode model in `provider/model` format. Leave it empty to keep using OpenCode's default model selection.
 
 ## Keyboard Shortcuts
 
